@@ -211,7 +211,6 @@ void vprintfmt(void (*putch)(int, void *), void *putdat, const char *fmt, va_lis
 
 		// (unsigned) octal
 		case 'o':
-			putch('0', putdat);
 			// 获得数字
 			num = getuint(&ap, lflag);
 			// 设置 base 为 8，8进制
