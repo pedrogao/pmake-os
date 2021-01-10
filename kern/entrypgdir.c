@@ -11,6 +11,7 @@ pte_t entry_pgtable[NPTENTRIES];
 // virtual addresses [0, 4MB) to physical addresses [0, 4MB); this
 // region is critical for a few instructions in entry.S and then we
 // never use it again.
+// 将 4MB的物理地址映射到虚拟地址中，后面再映射更多
 //
 // Page directories (and page tables), must start on a page boundary,
 // hence the "__aligned__" attribute.  Also, because of restrictions

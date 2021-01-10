@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/pedro/mit6.828/Python-2.7.14/python
 
 import re
 from gradelib import *

@@ -10,8 +10,7 @@
 #include <kern/kclock.h>
 
 
-void
-i386_init(void)
+void i386_init(void)
 {
 	extern char edata[], end[];
 
@@ -34,7 +33,6 @@ i386_init(void)
 		monitor(NULL);
 }
 
-
 /*
  * Variable panicstr contains argument to first call to panic; used as flag
  * to indicate that the kernel has already called panic.
@@ -45,8 +43,7 @@ const char *panicstr;
  * Panic is called on unresolvable fatal errors.
  * It prints "panic: mesg", and then enters the kernel monitor.
  */
-void
-_panic(const char *file, int line, const char *fmt,...)
+void _panic(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -70,8 +67,7 @@ dead:
 }
 
 /* like panic, but don't */
-void
-_warn(const char *file, int line, const char *fmt,...)
+void _warn(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
