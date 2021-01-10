@@ -8,19 +8,17 @@
 #include <kern/console.h>
 
 // Test the stack backtrace function (lab 1 only)
-void
-test_backtrace(int x)
+void test_backtrace(int x)
 {
 	cprintf("entering test_backtrace %d\n", x);
 	if (x > 0)
-		test_backtrace(x-1);
+		test_backtrace(x - 1);
 	else
 		mon_backtrace(0, 0, 0);
 	cprintf("leaving test_backtrace %d\n", x);
 }
 
-void
-i386_init(void)
+void i386_init(void)
 {
 	extern char edata[], end[];
 
@@ -35,6 +33,12 @@ i386_init(void)
 
 	cprintf("6828 decimal is %o octal!\n", 6828);
 
+	// unsigned int i = 0x00646c72;
+	// cprintf("H%x Wo%s\n", 57616, &i);
+
+	// test mon_backtrace
+	// mon_backtrace(0, 0, 0);
+
 	// Test the stack backtrace function (lab 1 only)
 	test_backtrace(5);
 
@@ -42,7 +46,6 @@ i386_init(void)
 	while (1)
 		monitor(NULL);
 }
-
 
 /*
  * Variable panicstr contains argument to first call to panic; used as flag
@@ -54,8 +57,7 @@ const char *panicstr;
  * Panic is called on unresolvable fatal errors.
  * It prints "panic: mesg", and then enters the kernel monitor.
  */
-void
-_panic(const char *file, int line, const char *fmt,...)
+void _panic(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -79,8 +81,7 @@ dead:
 }
 
 /* like panic, but don't */
-void
-_warn(const char *file, int line, const char *fmt,...)
+void _warn(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
