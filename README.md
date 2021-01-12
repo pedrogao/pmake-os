@@ -3,6 +3,7 @@
 ## labs
 
 - [lab1](./docs/lab1.md)
+- [lab2](./docs/lab2.md)
 
 ## 提示（重中之重！！！）
 
