@@ -84,9 +84,8 @@ page table 的管理，代码实现线性地址到物理地址的 insert 和 rem
 
 完成 `mem_init()`函数，然后调用`check_page()`。
 
-
-
 ## 参考资料
 
 - lab2：https://pdos.csail.mit.edu/6.828/2018/labs/lab2/
 - https://www.cnblogs.com/gatsby123/p/9832223.html
+- https://jiyou.github.io/blog/2018/04/19/mit.6.828/jos-lab2/

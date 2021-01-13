@@ -10,13 +10,13 @@
 #include <kern/kclock.h>
 
 // These variables are set by i386_detect_memory()
-size_t npages;								// Amount of physical memory (in pages)
-static size_t npages_basemem; // Amount of base memory (in pages)
+size_t npages;								// Amount of physical memory (in pages) 页的总数，即 page_dict * page_table，page_num
+static size_t npages_basemem; // Amount of base memory (in pages) 页的开始地址
 
 // These variables are set in mem_init()
 pde_t *kern_pgdir;											// Kernel's initial page directory 内核初始化页目录
 struct PageInfo *pages;									// Physical page state array
-static struct PageInfo *page_free_list; // Free list of physical pages
+static struct PageInfo *page_free_list; // Free list of physical pages 空闲链表
 
 // --------------------------------------------------------------
 // Detect machine's physical memory setup.
@@ -164,6 +164,9 @@ void mem_init(void)
 	// following line.)
 
 	// Permissions: kernel R, user R
+	// kern_pgdir 是单独分配的一页，专门用来管理其它物理页的权限
+	// 如 PDX 取得是 page_dict，因此设置的是 UVPT 这一块物理页的权限是 用户态、内核态可读
+	// UVPT 处的 page_dict 权限
 	kern_pgdir[PDX(UVPT)] = PADDR(kern_pgdir) | PTE_U | PTE_P;
 
 	//////////////////////////////////////////////////////////////////////
@@ -177,6 +180,7 @@ void mem_init(void)
 	// npages 是内存中物理页的数量
 	// 使用 memset 函数让每个物理页都归 0
 	// Your code goes here:
+	// 再专门分配一块物理内存给页的原数据管理使用
 	size_t total_size = sizeof(struct PageInfo) * npages;
 	pages = (struct PageInfo *)boot_alloc(total_size);
 	memset(pages, 0, total_size);
@@ -186,6 +190,7 @@ void mem_init(void)
 	// memory management will go through the page_* functions. In
 	// particular, we can now map memory using boot_map_region
 	// or page_insert
+	// 接下来，初始化物理页
 	// 我们已经分配内核最初的数据结构
 	// 我们分配了空闲物理页表，一旦我们完成了，以后所有的内存管理都要通过 page_* 这些函数
 	// 特别的，我们可以通过 boot_map_region 或者 page_insert 来映射内存
@@ -241,12 +246,14 @@ void mem_init(void)
 	//
 	// If the machine reboots at this point, you've probably set up your
 	// kern_pgdir wrong.
+	// 将开启分页的 kern_pgdir 地址设置到 cr3
 	lcr3(PADDR(kern_pgdir));
 
 	check_page_free_list(0);
 
 	// entry.S set the really important flags in cr0 (including enabling
 	// paging).  Here we configure the rest of the flags that we care about.
+	// 开启分页
 	cr0 = rcr0();
 	cr0 |= CR0_PE | CR0_PG | CR0_AM | CR0_WP | CR0_NE | CR0_MP;
 	cr0 &= ~(CR0_TS | CR0_EM);
@@ -301,15 +308,19 @@ void page_init(void)
 	// 规定第一页，即 0 号页不能使用
 	// 从 io_hole 开始一直到内核代码结束，这里的物理内存都已经被使用了，不能被其他人使用
 	size_t io_hole_start_page = (size_t)IOPHYSMEM / PGSIZE;
+	// 这个地方通过 boot_alloc(0) 拿到 next_free 的地址
+	// next_free 是空闲内存空间的首地址
+	// 然后得到物理地址 / PGSIZE 看看剩余多少页可用
+	// 注意，物理页是从高位开始分配的，因此 地址/PGSIZE 直接拿到多少页
 	size_t kernel_end_page = PADDR(boot_alloc(0)) / PGSIZE; //  boot_alloc 返回的是虚拟地址，因此需要 PADDR 转换为物理地址
 	for (i = 0; i < npages; i++)
 	{
-		if (i == 0)
+		if (i == 0) // 第一页不使用
 		{
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
 		}
-		else if (i >= io_hole_start_page && i < kernel_end_page)
+		else if (i >= io_hole_start_page && i < kernel_end_page) // io hole 不能用
 		{
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
@@ -436,7 +447,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 			return NULL;
 		pp->pp_ref++;
 		// pde_ptr 指向当前被分配物理页，且 user write
-		*pde_ptr = (page2pa(pp)) | PTE_P | PTE_U | PTE_W;
+		*pde_ptr = (page2pa(pp)) | PTE_P | PTE_U | PTE_W; // 设置权限
 	}
 	return (pte_t *)KADDR(PTE_ADDR(*pde_ptr)) + PTX(va);
 }
@@ -462,7 +473,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 		pgs++;
 	for (size_t i = 0; i < pgs; i++)
 	{
-		pde_t *pte = pgdir_walk(pgdir, (void *)va, 1);
+		pte_t *pte = pgdir_walk(pgdir, (void *)va, 1);
 		if (pte == NULL)
 			panic("boot_map_region() out of memory\n");
 		*pte = pa | PTE_P | perm; // 修改 va 对应的 pte 值
@@ -506,16 +517,16 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 int page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
-	pde_t *pde = pgdir_walk(pgdir, va, 1); // 给 va 分配一个物理页
-	if (pde == NULL)
+	pte_t *pte = pgdir_walk(pgdir, va, 1); // 给 va 分配一个物理页
+	if (pte == NULL)
 		return -E_NO_MEM;
 	// 分配成功， pp->pp_ref ++
 	pp->pp_ref++;
-	if ((*pde) & PTE_P) // 如果 va 已经被映射了，即 PTE_P 已经被设置了，那么 remove
+	if ((*pte) & PTE_P) // 如果 va 已经被映射了，即 PTE_P 已经被设置了，那么先 remove
 		page_remove(pgdir, va);
 	uint32_t pa = page2pa(pp); // 得到 pp 物理页的首地址
 	// 修改物理页的 permissions
-	*pde = pa | perm | PTE_P;
+	*pte = pa | perm | PTE_P;
 	pgdir[PDX(va)] |= perm;
 	return 0;
 }
@@ -537,15 +548,15 @@ struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	// Fill this function in
-	pde_t *pde = pgdir_walk(pgdir, va, 0); // 注意 flag 是 0，不能新建
-	if (pde == NULL)
+	pte_t *pte = pgdir_walk(pgdir, va, 0); // 注意 flag 是 0，不能新建
+	if (pte == NULL)
 		return NULL;
-	if (!(*pde) & PTE_P) // 如果页没有被分配，则返回 NULL
+	if (!(*pte) & PTE_P) // 如果页没有被分配，则返回 NULL
 		return NULL;
-	uint32_t p_addr = PTE_ADDR(*pde); // 对应的物理地址
+	uint32_t p_addr = PTE_ADDR(*pte); // 对应的物理地址
 	struct PageInfo *pp = pa2page(p_addr);
 	if (pte_store != NULL) // pte_store 非空，则存储页的 pte
-		*pte_store = pde;
+		*pte_store = pte;
 	return pp;
 }
 
@@ -574,7 +585,7 @@ void page_remove(pde_t *pgdir, void *va)
 	if (pp == NULL)
 		return;
 	page_decref(pp);					 // 自动减1，如果为0则free
-	*pte_store = 0;						 // 将 PTE 清空
+	*pte_store = 0;						 // The pg table entry corresponding to 'va' should be set to 0.
 	tlb_invalidate(pgdir, va); // 设置 tlb 为 invalidate 失效化TLB缓存
 }
 

@@ -12,11 +12,12 @@
  */
 
 // Global descriptor numbers
-#define GD_KT 0x08	 // kernel text
-#define GD_KD 0x10	 // kernel data
-#define GD_UT 0x18	 // user text
-#define GD_UD 0x20	 // user data
-#define GD_TSS0 0x28 // Task segment selector for CPU 0
+// 全局描述子数字
+#define GD_KT 0x08	 // kernel text 内核代码
+#define GD_KD 0x10	 // kernel data 内核数据
+#define GD_UT 0x18	 // user text 用户代码
+#define GD_UD 0x20	 // user data 用户数据
+#define GD_TSS0 0x28 // Task segment selector for CPU 0  CPU0 的任务段选择子
 
 /*
  * Virtual memory map:                                Permissions
@@ -83,6 +84,7 @@
  */
 
 // All physical memory mapped at this address
+// 物理地址映射到虚拟地址的开始
 #define KERNBASE 0xF0000000
 
 // At IOPHYSMEM (640K) there is a 384K hole for I/O.  From the kernel,
