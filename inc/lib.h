@@ -20,16 +20,16 @@
 
 #define USED(x)		(void)(x)
 
-// main user program
+// main user program  用户态程序入口
 void	umain(int argc, char **argv);
 
 // libmain.c or entry.S
-extern const char *binaryname;
-extern const volatile struct Env *thisenv;
-extern const volatile struct Env envs[NENV];
-extern const volatile struct PageInfo pages[];
+extern const char *binaryname; // 执行文件名称
+extern const volatile struct Env *thisenv; // 当前环境
+extern const volatile struct Env envs[NENV]; // 环境列表
+extern const volatile struct PageInfo pages[]; // 页表
 
-// exit.c
+// exit.c 程序退出
 void	exit(void);
 
 // pgfault.c

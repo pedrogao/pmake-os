@@ -1,7 +1,7 @@
 #ifndef JOS_INC_TRAP_H
 #define JOS_INC_TRAP_H
 
-// Trap numbers
+// Trap numbers 陷入内核 trap 的序号
 // These are processor defined:
 #define T_DIVIDE     0		// divide error
 #define T_DEBUG      1		// debug exception
@@ -26,7 +26,7 @@
 
 // These are arbitrarily chosen, but with care not to overlap
 // processor defined exceptions or interrupt vectors.
-#define T_SYSCALL   48		// system call
+#define T_SYSCALL   48		// system call 系统调用
 #define T_DEFAULT   500		// catchall
 
 #define IRQ_OFFSET	32	// IRQ 0 corresponds to int IRQ_OFFSET
@@ -55,8 +55,9 @@ struct PushRegs {
 	uint32_t reg_eax;
 } __attribute__((packed));
 
+// switching from user to kernel mod
 struct Trapframe {
-	struct PushRegs tf_regs;
+	struct PushRegs tf_regs; // 寄存器
 	uint16_t tf_es;
 	uint16_t tf_padding1;
 	uint16_t tf_ds;

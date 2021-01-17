@@ -16,6 +16,7 @@
 # location in physical memory (its load address).	 
 ###################################################################
 
+# RELOC 的目的是虚拟地址与实际物理地址之间差了一个 KERNBASE，这个 KERNBASE 的值在 ld 中来体现
 #define	RELOC(x) ((x) - KERNBASE)
 
 #define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
@@ -55,8 +56,9 @@ entry:
 
 	# Load the physical address of entry_pgdir into cr3.  entry_pgdir
 	# is defined in entrypgdir.c.
+	# 将内存映射表地址存到 eax 中
 	movl	$(RELOC(entry_pgdir)), %eax
-	movl	%eax, %cr3
+	movl	%eax, %cr3 # 将内存映射表的地址存放到 cr3 中，准备分页的工作已经完成
 	# Turn on paging.
 	movl	%cr0, %eax
 	orl	$(CR0_PE|CR0_PG|CR0_WP), %eax

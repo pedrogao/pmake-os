@@ -24,25 +24,29 @@ typedef int32_t envid_t;
 // All real environments are greater than 0 (so the sign bit is zero).
 // envid_ts less than 0 signify errors.  The envid_t == 0 is special, and
 // stands for the current environment.
+// envid_t 共 32 位，第一位是标志位，标志位等于 0 表示环境，小于 0 表示 errors
+// envid_t == 0 时比较特殊，表示当前的环境
+// 中间 21 位是唯一标识，最后 10 位是环境序号
 
 #define LOG2NENV		10
 #define NENV			(1 << LOG2NENV)
-#define ENVX(envid)		((envid) & (NENV - 1))
+#define ENVX(envid)		((envid) & (NENV - 1)) // 得到环境序号
 
-// Values of env_status in struct Env
+// Values of env_status in struct Env 环境状态
 enum {
-	ENV_FREE = 0,
-	ENV_DYING,
-	ENV_RUNNABLE,
-	ENV_RUNNING,
-	ENV_NOT_RUNNABLE
+	ENV_FREE = 0, // 空闲
+	ENV_DYING, // 死亡
+	ENV_RUNNABLE, // 可运行
+	ENV_RUNNING, // 正在运行
+	ENV_NOT_RUNNABLE // 不可运行
 };
 
-// Special environment types
+// Special environment types  环境变量类型
 enum EnvType {
-	ENV_TYPE_USER = 0,
+	ENV_TYPE_USER = 0, // 用户态
 };
 
+// 其实就是进程
 struct Env {
 	struct Trapframe env_tf;	// Saved registers
 	struct Env *env_link;		// Next free Env
