@@ -47,9 +47,45 @@
  * Lab 3: Your code here for generating entry points for the different traps.
  */
 
-
+	TRAPHANDLER_NOEC(DIVIDE, T_DIVIDE)
+	TRAPHANDLER_NOEC(DEBUG, T_DEBUG)
+	TRAPHANDLER_NOEC(NMI, T_NMI)
+	TRAPHANDLER_NOEC(BRKPT, T_BRKPT)
+	TRAPHANDLER_NOEC(OFLOW, T_OFLOW)
+	TRAPHANDLER_NOEC(BOUND, T_BOUND)
+	TRAPHANDLER_NOEC(ILLOP, T_ILLOP)
+	TRAPHANDLER_NOEC(DEVICE, T_DEVICE)
+	TRAPHANDLER(DBLFLT, T_DBLFLT)
+	TRAPHANDLER(TSS, T_TSS)
+	TRAPHANDLER(SEGNP, T_SEGNP)
+	TRAPHANDLER(STACK, T_STACK)
+	TRAPHANDLER(GPFLT, T_GPFLT)
+	TRAPHANDLER(PGFLT, T_PGFLT)
+	TRAPHANDLER_NOEC(FPERR, T_FPERR)
+	TRAPHANDLER(ALIGN, T_ALIGN)
+	TRAPHANDLER_NOEC(MCHK, T_MCHK)
+	TRAPHANDLER_NOEC(SIMDERR, T_SIMDERR)
+	TRAPHANDLER_NOEC(SYSCALL, T_SYSCALL)
+	TRAPHANDLER_NOEC(DEFAULT, T_DEFAULT)
 
 /*
  * Lab 3: Your code here for _alltraps
  */
 
+	/* 参考inc/trap.h中的Trapframe结构。tf_ss，tf_esp，tf_eflags，tf_cs，tf_eip，tf_err在中断发生时由处理器压入，所以现在只需要压入剩下寄存器（%ds,%es,通用寄存器）*/
+	/* 切换到内核数据段 */
+.globl _alltraps
+_alltraps:
+	# Build trap frame.
+	pushl %ds
+	pushl %es
+	pushal 
+	# Set up data segments.
+	# set up processor to run kernel C code, trap()
+	movw $(GD_KD), %ax
+	movw %ax, %ds
+	movw %ax, %es
+
+	# Call trap(tf), where tf=%esp
+	pushl %esp       # create an argument for trap(tf)
+	call trap

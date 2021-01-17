@@ -55,6 +55,7 @@ struct PushRegs {
 	uint32_t reg_eax;
 } __attribute__((packed));
 
+// switching from user to kernel mod
 struct Trapframe {
 	struct PushRegs tf_regs; // 寄存器
 	uint16_t tf_es;

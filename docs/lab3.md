@@ -55,4 +55,9 @@
 
 ## PartA：用户环境和异常处理
 
+## PartB：缺页中断，中断异常和系统调用
 
+## 参考资料
+
+- https://www.cnblogs.com/gatsby123/p/9838304.html
+- https://www.dazhuanlan.com/2020/04/19/5e9b693b28713/

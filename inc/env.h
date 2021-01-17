@@ -43,9 +43,10 @@ enum {
 
 // Special environment types  环境变量类型
 enum EnvType {
-	ENV_TYPE_USER = 0, // 用户态环境变量
+	ENV_TYPE_USER = 0, // 用户态
 };
 
+// 其实就是进程
 struct Env {
 	struct Trapframe env_tf;	// Saved registers trap 需要保存的寄存器
 	struct Env *env_link;		// Next free Env 下一个可用的环境
@@ -56,7 +57,7 @@ struct Env {
 	uint32_t env_runs;		// Number of times environment has run 环境运行的时间
 
 	// Address space
-	pde_t *env_pgdir;		// Kernel virtual address of page dir 环境的虚拟地址
+	pde_t *env_pgdir;		// Kernel virtual address of page dir 环境的虚拟地址空间
 };
 
 #endif // !JOS_INC_ENV_H
