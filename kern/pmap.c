@@ -184,9 +184,8 @@ void mem_init(void)
 	// 使用 memset 函数让每个物理页都归 0
 	// Your code goes here:
 	// 再专门分配一块物理内存给页的原数据管理使用
-	size_t total_size = sizeof(struct PageInfo) * npages;
-	pages = (struct PageInfo *)boot_alloc(total_size);
-	memset(pages, 0, total_size);
+	pages = (struct PageInfo *)boot_alloc(sizeof(struct PageInfo) * npages);
+	memset(pages, 0, sizeof(struct PageInfo) * npages);
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
 	// LAB 3: Your code here.
@@ -305,6 +304,14 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	for (int i = 0; i < NCPU; i++)
+	{
+		boot_map_region(kern_pgdir, 
+			KSTACKTOP - KSTKSIZE - i * (KSTKSIZE + KSTKGAP), 
+			KSTKSIZE, 
+			PADDR(percpu_kstacks[i]), 
+			PTE_W);
+	}
 }
 
 // --------------------------------------------------------------
@@ -370,6 +377,10 @@ void page_init(void)
 		}
 		else if (i >= io_hole_start_page && i < kernel_end_page) // io hole 不能用
 		{
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
+		} 
+		else if (i == MPENTRY_PADDR / PGSIZE) {
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
 		}
@@ -680,7 +691,15 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	// panic("mmio_map_region not implemented");
+	size = ROUNDUP(pa + size, PGSIZE);
+	pa = ROUNDDOWN(pa, PGSIZE);
+	size -= pa;
+	if (base + size >= MMIOLIM) 
+		panic("not enough memory");
+	boot_map_region(kern_pgdir,base,size,pa, PTE_PCD| PTE_PWT| PTE_W);
+	base += size;
+	return (void*)(base - size);
 }
 
 static uintptr_t user_mem_check_addr;
@@ -706,7 +725,7 @@ static uintptr_t user_mem_check_addr;
 int user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-	cprintf("user_mem_check va: %x, len: %x\n", va, len);
+	// cprintf("user_mem_check va: %x, len: %x\n", va, len);
 	uint32_t begin = (uint32_t)ROUNDDOWN(va, PGSIZE);
 	uint32_t end = (uint32_t)ROUNDUP(va + len, PGSIZE);
 	uint32_t i;
@@ -719,7 +738,7 @@ int user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 			return -E_FAULT;
 		}
 	}
-	cprintf("user_mem_check success va: %x, len: %x\n", va, len);
+	// cprintf("user_mem_check success va: %x, len: %x\n", va, len);
 	return 0;
 }
 

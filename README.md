@@ -4,6 +4,8 @@
 
 - [lab1](./docs/lab1.md)
 - [lab2](./docs/lab2.md)
+- [lab3](./docs/lab3.md)
+- [lab4](./docs/lab4.md)
 
 ## 提示（重中之重！！！）
 
